@@ -15,6 +15,9 @@ all: httpserverd postinst prerm
 	mkdir com.michael.httpserver_$(VERSION)_iphoneos-arm/Library/PreferenceLoader
 	mkdir com.michael.httpserver_$(VERSION)_iphoneos-arm/Library/PreferenceLoader/Preferences
 	cp HttpServer.plist com.michael.httpserver_$(VERSION)_iphoneos-arm/Library/PreferenceLoader/Preferences
+	mkdir com.michael.httpserver_$(VERSION)_iphoneos-arm/usr
+	mkdir com.michael.httpserver_$(VERSION)_iphoneos-arm/usr/libexec
+	mv httpserverd com.michael.httpserver_$(VERSION)_iphoneos-arm/usr/libexec
 	dpkg -b com.michael.httpserver_$(VERSION)_iphoneos-arm
 
 httpserverd: clean
