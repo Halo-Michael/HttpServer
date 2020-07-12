@@ -7,6 +7,7 @@ int main()
         return 1;
     }
 
+    chown("/Library/LaunchDaemons/com.michael.httpserverd.plist", 0, 0);
     system("launchctl load /Library/LaunchDaemons/com.michael.httpserverd.plist");
 
     return 0;
