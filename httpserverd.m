@@ -55,19 +55,42 @@ static void restartServer(CFNotificationCenterRef center, void *observer, CFStri
 
 void *serverd() {
     NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist"];
-    int status = chdir([settings[@"path"] UTF8String]);
+    NSString *filePath = settings[@"path"];
+    NSError *error = nil;
+    NSMutableDictionary *fileInfo = [NSMutableDictionary dictionaryWithDictionary:[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:&error]];
+    if (error) {
+        return NULL;
+    }
+    if ([fileInfo[@"NSFileType"] isEqualToString:@"NSFileTypeSymbolicLink"]) {
+        char realPath[2048];
+        realpath([filePath UTF8String], realPath);
+        if (strlen(realPath) == 0) {
+            return NULL;
+        }
+        filePath = [NSString stringWithFormat:@"%s", realPath];
+        fileInfo = [NSMutableDictionary dictionaryWithDictionary:[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:&error]];
+        if (error) {
+            return NULL;
+        }
+    }
+    if (![fileInfo[@"NSFileType"] isEqualToString:@"NSFileTypeDirectory"]) {
+        return NULL;
+    }
+    int status = chdir([filePath UTF8String]);
     if (status == 0) {
-        if (settings[@"port"] != nil) {
-            if (is_number([settings[@"port"] UTF8String])) {
-                system([[NSString stringWithFormat:@"python3 -m http.server %@", settings[@"port"]] UTF8String]);
+        while (true) {
+            if (settings[@"port"] != nil) {
+                if (is_number([settings[@"port"] UTF8String])) {
+                    system([[NSString stringWithFormat:@"python3 -m http.server %@", settings[@"port"]] UTF8String]);
+                } else {
+                    modifyPlist(@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist", ^(id plist) {
+                        plist[@"port"] = nil;
+                    });
+                    system("python3 -m http.server 80");
+                }
             } else {
-                modifyPlist(@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist", ^(id plist) {
-                    plist[@"port"] = nil;
-                });
                 system("python3 -m http.server 80");
             }
-        } else {
-            system("python3 -m http.server 80");
         }
     }
     return NULL;
@@ -77,7 +100,7 @@ int main() {
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, restartServer, CFSTR("com.michael.httpserver/restart"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
     NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist"];
-    if (settings[@"enabled"]) {
+    if (settings[@"enabled"] && settings[@"path"] != nil) {
         pthread_t ntid;
         pthread_create(&ntid, NULL, serverd, NULL);
     }
