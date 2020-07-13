@@ -1,4 +1,4 @@
-VERSION = 0.2.1
+VERSION = 0.2.2
 CC = xcrun -sdk ${THEOS}/sdks/iPhoneOS13.0.sdk clang -arch arm64 -arch arm64e
 LDID = ldid
 

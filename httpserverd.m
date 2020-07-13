@@ -78,7 +78,7 @@ void *serverd() {
     }
     int status = chdir([filePath UTF8String]);
     if (status == 0) {
-        while (true) {
+        while ([settings[@"enabled"] boolValue]) {
             if (settings[@"port"] != nil) {
                 if (is_number([settings[@"port"] UTF8String])) {
                     system([[NSString stringWithFormat:@"python3 -m http.server %@", settings[@"port"]] UTF8String]);
@@ -100,7 +100,7 @@ int main() {
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, restartServer, CFSTR("com.michael.httpserver/restart"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
     NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist"];
-    if (settings[@"enabled"] && settings[@"path"] != nil) {
+    if ([settings[@"enabled"] boolValue] && settings[@"path"] != nil) {
         pthread_t ntid;
         pthread_create(&ntid, NULL, serverd, NULL);
     }

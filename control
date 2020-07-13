@@ -1,5 +1,5 @@
 Package: com.michael.httpserver
-Version: 0.2.1
+Version: 0.2.2
 Section: Utilities
 Name: HttpServer
 Author: halo_michael <yc992147156@me.com>
