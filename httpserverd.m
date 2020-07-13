@@ -54,7 +54,9 @@ static void restartServer(CFNotificationCenterRef center, void *observer, CFStri
 }
 
 void *serverd() {
-    NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist"];
+    CFStringRef appID = CFSTR("com.michael.httpserver");
+    CFArrayRef keyList = CFPreferencesCopyKeyList(appID, CFSTR("mobile"), kCFPreferencesAnyHost);
+    NSDictionary *settings = (NSDictionary *)CFBridgingRelease(CFPreferencesCopyMultiple(keyList, appID, CFSTR("mobile"), kCFPreferencesAnyHost));
     NSString *filePath = settings[@"path"];
     NSError *error = nil;
     NSMutableDictionary *fileInfo = [NSMutableDictionary dictionaryWithDictionary:[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:&error]];
@@ -78,7 +80,7 @@ void *serverd() {
     }
     int status = chdir([filePath UTF8String]);
     if (status == 0) {
-        while ([settings[@"enabled"] boolValue]) {
+        while (true) {
             if (settings[@"port"] != nil) {
                 if (is_number([settings[@"port"] UTF8String])) {
                     system([[NSString stringWithFormat:@"python3 -m http.server %@", settings[@"port"]] UTF8String]);
@@ -86,6 +88,7 @@ void *serverd() {
                     modifyPlist(@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist", ^(id plist) {
                         plist[@"port"] = nil;
                     });
+                    system("killall -9 cfprefsd");
                     system("python3 -m http.server 80");
                 }
             } else {
@@ -99,10 +102,15 @@ void *serverd() {
 int main() {
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, restartServer, CFSTR("com.michael.httpserver/restart"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
-    NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist"];
-    if ([settings[@"enabled"] boolValue] && settings[@"path"] != nil) {
-        pthread_t ntid;
-        pthread_create(&ntid, NULL, serverd, NULL);
+    NSDictionary *settings = nil;
+    CFStringRef appID = CFSTR("com.michael.httpserver");
+    CFArrayRef keyList = CFPreferencesCopyKeyList(appID, CFSTR("mobile"), kCFPreferencesAnyHost);
+    if([(__bridge NSArray *)keyList containsObject:@"enabled"]) {
+        settings = (NSDictionary *)CFBridgingRelease(CFPreferencesCopyMultiple(keyList, appID, CFSTR("mobile"), kCFPreferencesAnyHost));
+        if ([settings[@"enabled"] boolValue] && settings[@"path"] != nil && ![settings[@"path"] isEqual:@""]) {
+            pthread_t ntid;
+            pthread_create(&ntid, NULL, serverd, NULL);
+        }
     }
     CFRunLoopRun();
     return 0;

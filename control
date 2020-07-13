@@ -1,10 +1,10 @@
 Package: com.michael.httpserver
-Version: 0.2.2
+Version: 0.2.3
 Section: Utilities
 Name: HttpServer
 Author: halo_michael <yc992147156@me.com>
 Sponsor: halo_michael <yc992147156@me.com>
 Maintainer: halo_michael <yc992147156@me.com>
-Depends: preferenceloader, python3
+Depends: preferenceloader, python3, shell-cmds
 Architecture: iphoneos-arm
 Description: Enable local http server on your device, set in Settings app.
