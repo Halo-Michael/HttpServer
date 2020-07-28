@@ -73,11 +73,10 @@ void *serverd() {
 int main() {
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, restartServer, CFSTR("com.michael.httpserver/restart"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
-    NSDictionary *settings = nil;
     CFStringRef appID = CFSTR("com.michael.httpserver");
     CFArrayRef keyList = CFPreferencesCopyKeyList(appID, CFSTR("mobile"), kCFPreferencesAnyHost);
     if([(__bridge NSArray *)keyList containsObject:@"enabled"]) {
-        settings = (NSDictionary *)CFBridgingRelease(CFPreferencesCopyMultiple(keyList, appID, CFSTR("mobile"), kCFPreferencesAnyHost));
+        NSDictionary *settings = (NSDictionary *)CFBridgingRelease(CFPreferencesCopyMultiple(keyList, appID, CFSTR("mobile"), kCFPreferencesAnyHost));
         if ([settings[@"enabled"] boolValue] && settings[@"path"] != nil && ![settings[@"path"] isEqual:@""]) {
             pthread_t ntid;
             pthread_create(&ntid, NULL, serverd, NULL);
