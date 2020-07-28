@@ -22,32 +22,6 @@ bool is_number(const char *num)
     return true;
 }
 
-bool modifyPlist(NSString *filename, void (^function)(id))
-{
-    NSData *data = [NSData dataWithContentsOfFile:filename];
-    if (data == nil) {
-        return false;
-    }
-    NSPropertyListFormat format = 0;
-    id plist = [NSPropertyListSerialization propertyListWithData:data options:NSPropertyListMutableContainersAndLeaves format:&format error:nil];
-    if (plist == nil) {
-        return false;
-    }
-    if (function) {
-        function(plist);
-    }
-    NSData *newData = [NSPropertyListSerialization dataWithPropertyList:plist format:format options:0 error:nil];
-    if (newData == nil) {
-        return false;
-    }
-    if (![data isEqual:newData]) {
-        if (![newData writeToFile:filename atomically:YES]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 static void restartServer(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
     exit(0);
@@ -85,10 +59,7 @@ void *serverd() {
                 if (is_number([settings[@"port"] UTF8String])) {
                     system([[NSString stringWithFormat:@"python3 -m http.server %@", settings[@"port"]] UTF8String]);
                 } else {
-                    modifyPlist(@"/private/var/mobile/Library/Preferences/com.michael.httpserver.plist", ^(id plist) {
-                        plist[@"port"] = nil;
-                    });
-                    system("killall -9 cfprefsd");
+                    CFPreferencesSetValue(CFSTR("port"), nil, CFSTR("com.michael.httpserver"), CFSTR("mobile"), kCFPreferencesAnyHost);
                     system("python3 -m http.server 80");
                 }
             } else {
