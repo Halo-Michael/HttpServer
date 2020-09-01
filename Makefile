@@ -1,4 +1,4 @@
-VERSION = 0.2.4
+VERSION = 0.3.0
 CC = xcrun -sdk ${THEOS}/sdks/iPhoneOS13.0.sdk clang -arch arm64 -arch arm64e
 LDID = ldid
 
@@ -21,7 +21,7 @@ all: httpserverd postinst prerm
 	dpkg -b com.michael.httpserver_$(VERSION)_iphoneos-arm
 
 httpserverd: clean
-	$(CC) -fobjc-arc httpserverd.m -o httpserverd
+	$(CC) httpserverd.c -framework CoreFoundation -o httpserverd
 	strip httpserverd
 	$(LDID) -Sentitlements.xml httpserverd
 
