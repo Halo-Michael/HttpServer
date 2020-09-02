@@ -72,24 +72,27 @@ void *serverd() {
     free(realPath);
     if (status == 0) {
         while (true) {
-            char *port = "80";
             CFArrayRef keyList = CFPreferencesCopyKeyList(appID, CFSTR("mobile"), kCFPreferencesAnyHost);
             if (keyList != NULL) {
-                if (CFArrayContainsValue(keyList, CFRangeMake(0, CFArrayGetCount(keyList)), CFSTR("path"))) {
-                    port = CFStringCopyUTF8String(CFPreferencesCopyValue(CFSTR("path"), appID, CFSTR("mobile"), kCFPreferencesAnyHost));
-                    if (!is_number(port)) {
+                if (CFArrayContainsValue(keyList, CFRangeMake(0, CFArrayGetCount(keyList)), CFSTR("port"))) {
+                    char *port = CFStringCopyUTF8String(CFPreferencesCopyValue(CFSTR("port"), appID, CFSTR("mobile"), kCFPreferencesAnyHost));
+                    if (is_number(port)) {
+                        CFRelease(keyList);
+                        char *command = (char *)malloc(sizeof(char) * (strlen(port) + 24));
+                        memset(command, 0, sizeof(char) * (strlen(port) + 24));
+                        sprintf(command, "python3 -m http.server %s", port);
                         free(port);
-                        port = "80";
+                        system(command);
+                        free(command);
+                        continue;
+                    } else {
+                        free(port);
                         CFPreferencesSetValue(CFSTR("port"), NULL, appID, CFSTR("mobile"), kCFPreferencesAnyHost);
                     }
                 }
                 CFRelease(keyList);
             }
-            char *command = (char *)malloc(sizeof(char) * (strlen(port) + 24));
-            memset(command, 0, sizeof(char) * (strlen(port) + 24));
-            sprintf(command, "python3 -m http.server %s", port);
-            system(command);
-            free(command);
+            system("python3 -m http.server 80");
         }
     }
     return NULL;
